@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Toks Assistant</title>
+<meta name="theme-color" content="#04070c">
+<meta name="description" content="सत्येंद्र का बनाया हिंदी वॉइस असिस्टेंट">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Toks">
+<style>
+/* Layout: one full-screen glass orb, a logo button in the top corner opens a details sheet. Single dark cinematic world. */
+:root{
+  --a:#2ee6a6; --b:#1a8cff; --bg:#04070c;
+  --a-rgb:46,230,166; --b-rgb:26,140,255;
+  --ink:#eef4ff; --muted:rgba(226,236,255,.62);
+  --stroke:rgba(255,255,255,.2);
+  --font:"Hind","Noto Sans Devanagari","Segoe UI",system-ui,sans-serif;
+  --s:1;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);overflow:hidden;transition:background .8s;touch-action:manipulation}
+
+/* background */
+.bg{position:fixed;inset:0;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(80px)}
+.b1{width:60vmax;height:60vmax;top:-20vmax;left:-20vmax;background:radial-gradient(circle,rgba(var(--a-rgb),.55),transparent 70%);animation:f1 16s ease-in-out infinite}
+.b2{width:70vmax;height:70vmax;bottom:-30vmax;right:-25vmax;background:radial-gradient(circle,rgba(var(--b-rgb),.5),transparent 70%);animation:f2 20s ease-in-out infinite}
+.b3{width:40vmax;height:40vmax;top:35%;left:40%;background:radial-gradient(circle,rgba(var(--a-rgb),.3),transparent 70%);animation:f3 24s ease-in-out infinite}
+@keyframes f1{50%{transform:translate(25vmax,30vmax) scale(1.2)}}
+@keyframes f2{50%{transform:translate(-25vmax,-22vmax) scale(1.15)}}
+@keyframes f3{50%{transform:translate(-30vmax,15vmax) scale(1.35)}}
+.grain{position:fixed;inset:0;pointer-events:none;opacity:.08;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.65) 100%)}
+
+/* stage + orb */
+.stage{position:fixed;inset:0;display:grid;place-items:center}
+.wrap{position:relative;width:min(64vw,270px);aspect-ratio:1;display:grid;place-items:center;max-width:100%}
+.ring{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(var(--a-rgb),.6);opacity:0;pointer-events:none}
+.halo{position:absolute;inset:-35%;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(var(--a-rgb),.35),rgba(var(--b-rgb),.18) 45%,transparent 70%);filter:blur(18px);animation:halo 5s ease-in-out infinite}
+@keyframes halo{50%{transform:scale(1.12);opacity:.8}}
+.orb{position:relative;width:100%;height:100%;border-radius:50%;cursor:pointer;border:0;padding:0;background:none;display:block;
+  transform:scale(var(--s));transition:transform .14s ease-out;
+  box-shadow:0 0 50px rgba(var(--a-rgb),.5),0 0 130px rgba(var(--b-rgb),.35),0 30px 60px rgba(0,0,0,.5);animation:breathe 5s ease-in-out infinite}
+.orb:focus-visible{outline:2px solid var(--ink);outline-offset:6px}
+@keyframes breathe{50%{transform:scale(calc(var(--s) * 1.045))}}
+.body{position:absolute;inset:0;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 55%,rgba(var(--a-rgb),.9),rgba(var(--b-rgb),.85) 62%,#000 130%);isolation:isolate}
+.sw{position:absolute;width:75%;height:75%;border-radius:50%;filter:blur(22px);mix-blend-mode:screen;opacity:.9}
+.sw1{top:-10%;left:-8%;background:radial-gradient(circle,var(--a),transparent 70%);animation:o1 9s linear infinite}
+.sw2{bottom:-12%;right:-10%;background:radial-gradient(circle,var(--b),transparent 70%);animation:o2 12s linear infinite}
+.sw3{top:25%;left:30%;width:55%;height:55%;background:radial-gradient(circle,#fff,transparent 70%);opacity:.35;animation:o3 7s ease-in-out infinite}
+@keyframes o1{from{transform:rotate(0) translateX(18%) rotate(0)}to{transform:rotate(360deg) translateX(18%) rotate(-360deg)}}
+@keyframes o2{from{transform:rotate(0) translateX(22%) rotate(0)}to{transform:rotate(-360deg) translateX(22%) rotate(360deg)}}
+@keyframes o3{50%{transform:translate(18%,-12%) scale(1.3)}}
+.glass{position:absolute;inset:0;border-radius:50%;pointer-events:none;box-shadow:inset 0 -18px 40px rgba(0,0,0,.45),inset 0 14px 30px rgba(255,255,255,.35),inset 0 0 0 1.5px rgba(255,255,255,.28)}
+.gloss{position:absolute;top:5%;left:14%;width:72%;height:38%;border-radius:50%;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,0));opacity:.65;filter:blur(1px)}
+.spark{position:absolute;bottom:9%;left:50%;width:46%;height:14%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(255,255,255,.4),transparent 70%);pointer-events:none;filter:blur(3px)}
+
+[data-state=listening] .sw1{animation-duration:3.5s}
+[data-state=listening] .sw2{animation-duration:4.5s}
+[data-state=listening] .orb{animation:breathe 1s ease-in-out infinite;filter:brightness(1.2) saturate(1.25)}
+[data-state=listening] .ring{animation:ripple 1.8s ease-out infinite}
+[data-state=listening] .ring:nth-of-type(2){animation-delay:.6s}
+[data-state=listening] .ring:nth-of-type(3){animation-delay:1.2s}
+@keyframes ripple{0%{transform:scale(1);opacity:.75}100%{transform:scale(2.2);opacity:0}}
+[data-state=thinking] .sw1{animation-duration:1.3s}
+[data-state=thinking] .sw2{animation-duration:1.8s}
+[data-state=thinking] .orb{filter:brightness(1.1) hue-rotate(25deg)}
+[data-state=speaking] .sw1{animation-duration:5s}
+[data-state=speaking] .orb{animation:none;filter:brightness(1.18)}
+[data-state=ready] .ring{animation:ripple 1.2s ease-out infinite;border-color:rgba(255,255,255,.85)}
+[data-state=ready] .orb{animation:breathe 1.2s ease-in-out infinite;filter:brightness(1.3)}
+
+/* captions */
+.caption{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));text-align:center;pointer-events:none}
+.heard{font-size:14px;color:var(--muted);min-height:20px;margin:0 auto 6px;max-width:30em;overflow-wrap:anywhere}
+.reply{font-size:18px;line-height:1.5;color:var(--ink);max-width:24em;margin:0 auto;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 2px 14px rgba(0,0,0,.7)}
+body.no-text .reply,body.no-text .heard{visibility:hidden}
+
+/* corner logo */
+.logo{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);right:max(16px,env(safe-area-inset-right,0px));width:46px;height:46px;border-radius:50%;
+  display:grid;place-items:center;cursor:pointer;color:var(--ink);padding:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.2),rgba(255,255,255,.05));border:1px solid var(--stroke);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);
+  box-shadow:0 6px 22px rgba(0,0,0,.4),inset 0 1px 1px rgba(255,255,255,.4)}
+.logo:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.mark{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff,rgba(255,255,255,0) 30%),radial-gradient(circle,var(--a),var(--b) 80%);box-shadow:0 0 14px rgba(var(--a-rgb),.8)}
+
+/* details sheet */
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.sheet{width:100%;max-width:480px;max-height:90%;overflow-y:auto;border-radius:28px 28px 0 0;position:relative;
+  padding:22px max(18px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 22px) max(18px,env(safe-area-inset-left,0px));
+  background:linear-gradient(160deg,rgba(255,255,255,.17),rgba(255,255,255,.06) 50%,rgba(255,255,255,.1));border:1px solid var(--stroke);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);
+  box-shadow:0 -10px 50px rgba(0,0,0,.5),inset 0 1px 1px rgba(255,255,255,.4);animation:up .3s ease}
+@keyframes up{from{transform:translateY(100%)}}
+.sheet h2{margin:0 0 4px;font-size:21px;font-weight:600}
+.sheet p.sub{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.5}
+.sheet label{display:block;margin:14px 0 6px;font-size:13px;font-weight:500;color:var(--muted)}
+.sheet input[type=text],.sheet input[type=password],.sheet textarea,.sheet select{width:100%;padding:12px 14px;font:inherit;font-size:15px;color:var(--ink);background:rgba(255,255,255,.08);border:1px solid var(--stroke);border-radius:14px;outline:none}
+.sheet textarea{min-height:104px;resize:vertical;line-height:1.5}
+.sheet select option{color:#111}
+.sheet input:focus-visible,.sheet textarea:focus-visible,.sheet select:focus-visible{border-color:var(--a)}
+.sheet input[type=range]{width:100%;accent-color:var(--a)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;font-size:15px}
+.row input{width:22px;height:22px;accent-color:var(--a);flex-shrink:0}
+.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.sw-btn{aspect-ratio:1;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;min-width:0}
+.sw-btn[aria-pressed=true]{border-color:#fff;transform:scale(1.1)}
+.done{width:100%;margin-top:20px;padding:14px;border:0;border-radius:16px;font:inherit;font-weight:600;font-size:16px;cursor:pointer;color:#03121b;background:linear-gradient(135deg,var(--a),var(--b))}
+.note{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.5}
+.check{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.check li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid var(--stroke);font-size:14px}
+.check span{color:var(--muted);flex-shrink:0}
+.check b{font-weight:500;text-align:right;color:var(--ink);min-width:0}
+.ghost{width:100%;margin-top:10px;padding:12px;border-radius:14px;font:inherit;font-size:15px;color:var(--ink);background:rgba(255,255,255,.08);border:1px solid var(--stroke);cursor:pointer}
+@media (prefers-reduced-motion:reduce){.blob,.sw,.halo,.orb{animation:none}}
+html,body{margin:0;height:100%}
+.sheet a{color:var(--a)}
+.sheet small{display:block;margin-top:6px;font-size:12px;color:var(--muted);line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="grain"></div><div class="vignette"></div>
+
+<div class="stage" id="stage" data-state="idle">
+  <div class="wrap">
+    <div class="halo"></div>
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <button class="orb" id="orb" aria-label="बात शुरू या बंद करें">
+      <div class="body"><div class="sw sw1"></div><div class="sw sw2"></div><div class="sw sw3"></div></div>
+      <div class="glass"></div><div class="gloss"></div><div class="spark"></div>
+    </button>
+  </div>
+</div>
+
+<div class="caption" aria-live="polite">
+  <p class="heard" id="heard"></p>
+  <p class="reply" id="reply">गोले को छूकर बात शुरू कीजिए</p>
+</div>
+
+<button class="logo" id="logo" aria-label="अपनी ज़रूरी जानकारी और सेटिंग्स"><span class="mark"></span></button>
+
+<div class="overlay" id="overlay">
+  <div class="sheet" role="dialog" aria-labelledby="sheetTitle">
+    <h2 id="sheetTitle">Toks Assistant</h2>
+    <p class="sub">यहाँ जो लिखेंगे, असिस्टेंट हर बातचीत में उसे याद रखेगा।</p>
+
+    <label for="fName">आपका नाम</label>
+    <input type="text" id="fName" placeholder="जैसे: सतेन्द्र" autocomplete="off">
+
+    <label for="fAbout">आपके बारे में ज़रूरी बातें</label>
+    <textarea id="fAbout" placeholder="जैसे: मैं जिम और फिटनेस का कंटेंट बनाता हूँ, इंस्टाग्राम चलाता हूँ। मुझे हिंदी में छोटे और सीधे जवाब पसंद हैं।"></textarea>
+
+    <label for="fProv">दिमाग (AI सेवा)</label>
+    <select id="fProv"></select>
+    <small id="provHelp"></small>
+
+    <label for="fKey">API की चाबी</label>
+    <input type="password" id="fKey" placeholder="चाबी यहाँ चिपकाइए" autocomplete="off" autocapitalize="off" spellcheck="false">
+
+    <div id="customBox" hidden>
+      <label for="fUrl">API का पता (chat/completions)</label>
+      <input type="text" id="fUrl" placeholder="https://.../v1/chat/completions" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+
+    <label for="fModel">मॉडल का नाम (खाली छोड़ें तो अपने-आप)</label>
+    <input type="text" id="fModel" placeholder="" autocomplete="off" autocapitalize="off" spellcheck="false">
+
+    <label for="fLang">मैं किस भाषा में सुनूँ</label>
+    <select id="fLang">
+      <option value="hi">हिंदी</option>
+      <option value="en">English</option>
+    </select>
+
+    <label for="fRate">बोलने की रफ़्तार</label>
+    <input type="range" id="fRate" min="0.8" max="1.3" step="0.05" value="1">
+
+    <div class="row"><label for="fShow" style="margin:0;color:var(--ink)">जवाब स्क्रीन पर भी लिखा दिखे</label><input type="checkbox" id="fShow"></div>
+
+    <label>रंग</label>
+    <div class="swatches" id="swatches"></div>
+
+    <label>सब ठीक चल रहा है या नहीं</label>
+    <ul class="check" id="check">
+      <li><span>सुनना</span><b id="ckEar">…</b></li>
+      <li><span>बोलना</span><b id="ckVoice">…</b></li>
+      <li><span>दिमाग</span><b id="ckBrain">…</b></li>
+    </ul>
+    <button class="ghost" id="testVoice" type="button">आवाज़ जाँचिए</button>
+
+    <button class="done" id="done">ठीक है</button>
+    <p class="note">यह सारी जानकारी और चाबी सिर्फ़ आपके फ़ोन में सेव रहती है। बातचीत के समय आपकी बात और ऊपर लिखी जानकारी चुनी हुई AI सेवा को भेजी जाती है। पासवर्ड या बैंक की जानकारी यहाँ मत लिखिए।</p>
+  </div>
+</div>
+
+<script>
+(function () {
+'use strict';
+const $ = id => document.getElementById(id);
+const stage = $('stage');
+const synth = window.speechSynthesis || null;
+const SRc = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const isAndroid = /android/i.test(navigator.userAgent);
+const nav = url => (window.__nav || (u => { location.href = u; }))(url);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- settings (saved on this phone) ---------- */
+const KEY = 'toks_app_v1';
+const PROVIDERS = {
+  groq:       { n: 'Groq (मुफ़्त चाबी, बहुत तेज़)', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile', help: 'चाबी यहाँ बनती है: console.groq.com/keys' },
+  gemini:     { n: 'Google Gemini (मुफ़्त चाबी)',   url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', model: 'gemini-2.0-flash', help: 'चाबी यहाँ बनती है: aistudio.google.com/apikey' },
+  openrouter: { n: 'OpenRouter',                     url: 'https://openrouter.ai/api/v1/chat/completions', model: 'meta-llama/llama-3.3-70b-instruct:free', help: 'चाबी यहाँ बनती है: openrouter.ai/keys' },
+  openai:     { n: 'OpenAI (पैसे लगते हैं)',         url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini', help: 'चाबी यहाँ बनती है: platform.openai.com/api-keys' },
+  custom:     { n: 'अपनी सेवा (OpenAI जैसी)',        url: '', model: '', help: 'अपनी सेवा का पता और मॉडल नीचे भरिए।' },
+};
+const THEMES = [
+  { n: 'Emerald Night', a: '#2ee6a6', b: '#1a8cff', bg: '#04070c' },
+  { n: 'Teal & Orange', a: '#ff8a3d', b: '#1fb5c9', bg: '#05101a' },
+  { n: 'Neon Violet',   a: '#b46bff', b: '#ff4fa3', bg: '#09050f' },
+  { n: 'Crimson Noir',  a: '#ff3b52', b: '#ff9a4d', bg: '#0d0508' },
+  { n: 'Deep Ocean',    a: '#3db8ff', b: '#5b6dff', bg: '#030812' },
+  { n: 'Royal Gold',    a: '#ffd166', b: '#ff7a59', bg: '#0b0803' },
+];
+let cfg = { name: '', about: '', lang: 'hi', rate: 1, showText: true, theme: 0, provider: 'groq', key: '', model: '', url: '' };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (e) {} }
+function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255].join(','); }
+function applyTheme(i) {
+  const t = THEMES[i] || THEMES[0], r = document.documentElement.style;
+  r.setProperty('--a', t.a); r.setProperty('--b', t.b); r.setProperty('--bg', t.bg);
+  r.setProperty('--a-rgb', hexRgb(t.a)); r.setProperty('--b-rgb', hexRgb(t.b));
+  document.querySelector('meta[name=theme-color]').content = t.bg;
+  document.querySelectorAll('.sw-btn').forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+}
+const prov = () => PROVIDERS[cfg.provider] || PROVIDERS.groq;
+const apiUrl = () => cfg.provider === 'custom' ? (cfg.url || '').trim() : prov().url;
+const apiModel = () => (cfg.model || '').trim() || prov().model;
+
+/* ---------- runtime state ---------- */
+let sr = null, wanted = false, listening = false, thinking = false, speaking = false;
+let pending = null, turns = [], ctl = null, ampTimer = null, deafUntil = 0, greeted = false, torchTrack = null, wakeLock = null;
+let buf = '', lastPart = '', silT = null;
+const busy = () => thinking || speaking;
+function render() { stage.dataset.state = pending ? 'ready' : thinking ? 'thinking' : speaking ? 'speaking' : listening ? 'listening' : 'idle'; }
+function showHeard(t) { $('heard').textContent = t || ''; }
+function showReply(t) { $('reply').textContent = t || ''; }
+
+/* ---------- speaking ---------- */
+let voices = [];
+if (synth) { voices = synth.getVoices(); synth.onvoiceschanged = () => { voices = synth.getVoices(); }; }
+function pickVoice(hindi) {
+  const keys = hindi ? ['hi'] : ['en-in', 'en'];
+  for (const k of keys) { const v = voices.find(v => v.lang.replace('_', '-').toLowerCase().startsWith(k)); if (v) return v; }
+  return null;
+}
+function say(text) {
+  return new Promise(resolve => {
+    if (!synth || !text) { resolve(); return; }
+    try { synth.cancel(); } catch (e) {}
+    const hindi = /[ऀ-ॿ]/.test(text);
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = hindi ? 'hi-IN' : 'en-IN';
+    u.rate = Number(cfg.rate) || 1;
+    const v = pickVoice(hindi); if (v) u.voice = v;
+    let done = false;
+    const fin = () => {
+      if (done) return; done = true;
+      clearInterval(ampTimer); document.documentElement.style.setProperty('--s', 1);
+      speaking = false; deafUntil = Date.now() + 900; render(); resolve();
+    };
+    u.onstart = () => {
+      speaking = true; render(); clearInterval(ampTimer);
+      ampTimer = setInterval(() => document.documentElement.style.setProperty('--s', (1 + Math.random() * 0.13).toFixed(3)), 130);
+    };
+    u.onend = u.onerror = fin;
+    setTimeout(fin, Math.max(6000, text.length * 170));
+    speaking = true; render();
+    try { synth.speak(u); } catch (e) { fin(); }
+  });
+}
+function stopSpeaking() { try { if (synth) synth.cancel(); } catch (e) {} speaking = false; clearInterval(ampTimer); document.documentElement.style.setProperty('--s', 1); render(); }
+
+/* ---------- hearing ---------- */
+function onPartial(t) {
+  if (busy() || Date.now() < deafUntil) return;
+  lastPart = (t || '').trim(); showHeard((buf + ' ' + lastPart).trim()); arm();
+}
+function onFinal(t) {
+  if (busy() || Date.now() < deafUntil) return;
+  buf = (buf + ' ' + (t || '')).trim(); lastPart = ''; showHeard(buf); arm();
+}
+function arm() { clearTimeout(silT); silT = setTimeout(flush, lastPart ? 1800 : 1200); }
+function flush() {
+  const text = (buf + ' ' + lastPart).trim(); buf = ''; lastPart = '';
+  if (text.length > 1 && !busy()) ask(text);
+}
+async function holdScreen() { try { if (navigator.wakeLock && !wakeLock) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {} }
+function releaseScreen() { try { if (wakeLock) wakeLock.release(); } catch (e) {} wakeLock = null; }
+
+function beginSR() {
+  if (!wanted || sr || document.hidden || !SRc) return;
+  const r = new SRc();
+  sr = r; r.continuous = true; r.interimResults = true; r.maxAlternatives = 1;
+  r.lang = cfg.lang === 'en' ? 'en-IN' : 'hi-IN';
+  r.onstart = () => { listening = true; render(); };
+  r.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const x = e.results[i];
+      if (x.isFinal) onFinal(x[0].transcript); else interim += x[0].transcript;
+    }
+    if (interim) onPartial(interim);
+  };
+  r.onerror = e => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      wanted = false; releaseScreen();
+      showReply('माइक की अनुमति नहीं मिली। पता-पट्टी के 🔒 या ⚙ में Microphone को Allow कीजिए।');
+    } else if (e.error === 'network') { showReply('सुनने के लिए इंटरनेट चाहिए।'); }
+  };
+  r.onend = () => {
+    if (sr === r) sr = null;
+    listening = false; render();
+    if (wanted && !busy() && !document.hidden) setTimeout(beginSR, 250);
+  };
+  try { r.start(); } catch (e) { sr = null; setTimeout(beginSR, 600); }
+}
+function pauseSR() { const r = sr; sr = null; listening = false; clearTimeout(silT); if (r) { try { r.abort(); } catch (e) {} } render(); }
+function resumeSR() { if (wanted) setTimeout(beginSR, 150); }
+function startListening() {          // runs inside the user's tap
+  if (!SRc) { showReply('इस ब्राउज़र में बोलकर बात नहीं हो सकती। Android के Chrome में खोलिए।'); return false; }
+  wanted = true; holdScreen(); beginSR(); return true;
+}
+function stopListening() { wanted = false; pauseSR(); releaseScreen(); buf = ''; lastPart = ''; }
+
+/* ---------- apps, search, torch ---------- */
+const enc = encodeURIComponent;
+const APPS = {
+  youtube:   { pkg: 'com.google.android.youtube', url: q => q ? 'https://www.youtube.com/results?search_query=' + enc(q) : 'https://www.youtube.com/' },
+  instagram: { pkg: 'com.instagram.android', url: () => 'https://www.instagram.com/' },
+  whatsapp:  { pkg: 'com.whatsapp', url: () => 'https://wa.me/' },
+  facebook:  { pkg: 'com.facebook.katana', url: () => 'https://www.facebook.com/' },
+  telegram:  { pkg: 'org.telegram.messenger', url: () => 'https://t.me/' },
+  x:         { pkg: 'com.twitter.android', url: () => 'https://x.com/' },
+  gmail:     { pkg: 'com.google.android.gm', url: () => 'https://mail.google.com/' },
+  maps:      { pkg: 'com.google.android.apps.maps', url: q => q ? 'https://www.google.com/maps/search/?api=1&query=' + enc(q) : 'https://maps.google.com/' },
+  spotify:   { pkg: 'com.spotify.music', url: q => q ? 'https://open.spotify.com/search/' + enc(q) : 'https://open.spotify.com/' },
+  amazon:    { pkg: 'in.amazon.mShop.android.shopping', url: q => q ? 'https://www.amazon.in/s?k=' + enc(q) : 'https://www.amazon.in/' },
+  flipkart:  { pkg: 'com.flipkart.android', url: q => q ? 'https://www.flipkart.com/search?q=' + enc(q) : 'https://www.flipkart.com/' },
+  google:    { pkg: null, url: q => q ? 'https://www.google.com/search?q=' + enc(q) : 'https://www.google.com/' },
+  wikipedia: { pkg: null, url: q => q ? 'https://hi.wikipedia.org/w/index.php?search=' + enc(q) : 'https://hi.wikipedia.org/' },
+};
+function actionLink(kind, arg) {
+  arg = (arg || '').trim().slice(0, 200);
+  if (kind === 'search') return arg ? { web: 'https://www.google.com/search?q=' + enc(arg), pkg: null } : null;
+  if (kind === 'wa') { const n = arg.replace(/\D/g, ''); return { web: 'https://wa.me/' + (n.length === 10 ? '91' + n : n), pkg: 'com.whatsapp' }; }
+  if (kind === 'open') {
+    const bar = arg.indexOf('|');
+    const app = (bar < 0 ? arg : arg.slice(0, bar)).trim().toLowerCase();
+    const q = bar < 0 ? '' : arg.slice(bar + 1).trim();
+    return APPS[app] ? { web: APPS[app].url(q), pkg: APPS[app].pkg } : null;
+  }
+  return null;
+}
+function intentUrl(l) {
+  if (!l.pkg) return l.web;
+  const u = new URL(l.web);
+  return 'intent://' + u.host + u.pathname + u.search + '#Intent;scheme=https;package=' + l.pkg + ';S.browser_fallback_url=' + enc(l.web) + ';end';
+}
+function openFromTap(l) {
+  if (isAndroid) { nav(intentUrl(l)); return; }
+  const a = document.createElement('a'); a.href = l.web; a.target = '_blank'; a.rel = 'noopener noreferrer';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function launch(l) {
+  if (isAndroid) {
+    nav(intentUrl(l));
+    await sleep(1500);
+    if (document.hidden) return;           // ऐप खुल गया
+  }
+  pending = l; render();
+  await say('गोले को एक बार दबाइए।');
+}
+async function torch(on) {
+  try {
+    if (on) {
+      if (!torchTrack) {
+        const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+        torchTrack = s.getVideoTracks()[0];
+      }
+      const caps = torchTrack.getCapabilities ? torchTrack.getCapabilities() : {};
+      if (!caps.torch) { torchTrack.stop(); torchTrack = null; return { ok: false, msg: 'इस फ़ोन के कैमरे से फ्लैश लाइट कंट्रोल नहीं हो पा रही।' }; }
+      await torchTrack.applyConstraints({ advanced: [{ torch: true }] });
+      return { ok: true };
+    }
+    if (torchTrack) { try { await torchTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (e) {} torchTrack.stop(); torchTrack = null; }
+    return { ok: true };
+  } catch (e) { return { ok: false, msg: 'फ्लैश लाइट के लिए कैमरे की अनुमति दीजिए।' }; }
+}
+
+/* ---------- the brain ---------- */
+function instructions() {
+  const now = new Date().toLocaleString('hi-IN', { dateStyle: 'full', timeStyle: 'short' });
+  return [
+    'तुम "Toks Assistant" हो: फ़ोन पर चलने वाला एक लाइव वॉइस असिस्टेंट। यूज़र बोलकर बात करता है और तुम्हारा जवाब बोलकर सुनाया जाता है।',
+    'अगर कोई पूछे कि तुम्हें किसने बनाया, तो कहो: "मुझे सत्येंद्र ने बनाया है।" पर अगर कोई सीधे पूछे कि अंदर कौन सा AI मॉडल चलता है, तो सच बताओ कि यह एक AI मॉडल (' + apiModel() + ') की मदद से चलता है। खुद को किसी और नाम का मत बताओ।',
+    'अभी का समय: ' + now + '।',
+    cfg.name ? 'यूज़र का नाम: ' + cfg.name + '।' : '',
+    cfg.about ? 'यूज़र ने अपने बारे में यह बताया है, इसे ध्यान में रखो:\n' + cfg.about : '',
+    'बात करने का तरीका: दोस्त की तरह, गर्मजोशी और हल्के मज़ाक के साथ। जवाब 1 से 3 छोटे वाक्यों में दो। कोई markdown, तारे, सूची, इमोजी या ब्रैकेट मत लिखो। यूज़र जिस भाषा में बोले उसी में जवाब दो (हिंदी या अंग्रेज़ी या मिली-जुली)। अनुवाद माँगे तो सिर्फ़ अनुवाद बोलो। बोलने से आई गलतियाँ खुद समझ लो।',
+    'काम करवाने के लिए जवाब की आख़िरी अलग लाइनों में निशान लिखो (यूज़र इन्हें नहीं सुनेगा, पेज इन्हें चलाएगा):',
+    '[[open:APP|खोज]] जहाँ APP इनमें से एक: youtube, instagram, whatsapp, facebook, telegram, x, gmail, maps, spotify, amazon, flipkart, google, wikipedia। खोज वैकल्पिक है, जैसे [[open:youtube|अरिजीत सिंह के गाने]] या [[open:instagram]]।',
+    '[[search:खोज]] गूगल पर खोजने के लिए। [[wa:9876543210]] किसी नंबर पर व्हाट्सएप खोलने के लिए। [[torch:on]] या [[torch:off]] फ्लैश लाइट जलाने या बुझाने के लिए।',
+    'निशान लिखो तो जवाब में सिर्फ़ बोलो कि क्या कर रहे हो, जैसे "यूट्यूब खोल रहा हूँ।" कभी झूठ मत कहना कि काम हो गया जब तक निशान नहीं लिखा।',
+    'सच्चाई: तुम वॉल्यूम, कॉल, WiFi, ब्लूटूथ, अलार्म नहीं चला सकते। माँगा जाए तो एक वाक्य में साफ़ बताओ। जो पता नहीं उसका अंदाज़ा मत लगाओ।',
+  ].filter(Boolean).join('\n');
+}
+const MARK = /\[\[\s*(open|search|wa|torch)\s*:([^\]]*)\]\]/gi;
+async function think(signal) {
+  const r = await fetch(apiUrl(), {
+    method: 'POST', signal,
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key },
+    body: JSON.stringify({ model: apiModel(), messages: [{ role: 'system', content: instructions() }, ...turns], temperature: 0.7, max_tokens: 300 }),
+  });
+  if (!r.ok) { const e = new Error('http ' + r.status); e.status = r.status; throw e; }
+  const j = await r.json();
+  return (j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
+}
+async function ask(text) {
+  showHeard(text);
+  if (!cfg.key || !apiUrl()) {
+    pauseSR(); const m = 'पहले ऊपर के लोगो में AI की चाबी डालिए।';
+    showReply(m); openSheet(); await say(m); resumeSR(); return;
+  }
+  pending = null; thinking = true; pauseSR(); render(); showReply('…');
+  turns.push({ role: 'user', content: text });
+  if (turns.length > 16) turns = turns.slice(-16);
+  ctl = new AbortController(); const my = ctl;
+  let link = null;
+  try {
+    const raw = await think(my.signal);
+    if (my.signal.aborted) return;
+    const acts = []; let m;
+    MARK.lastIndex = 0;
+    while ((m = MARK.exec(raw))) acts.push([m[1].toLowerCase(), m[2]]);
+    let spoken = raw.replace(MARK, '').replace(/[*#_`>]/g, '').replace(/\s+/g, ' ').trim();
+    if (!spoken) spoken = acts.length ? 'ठीक है।' : 'हम्म, फिर से बोलिए।';
+    turns.push({ role: 'assistant', content: spoken });
+    for (const [k, a] of acts) {
+      if (k === 'torch') { const r = await torch(/on|चालू|जला/i.test(a)); if (!r.ok) spoken = r.msg; }
+      else if (!link) link = actionLink(k, a);
+    }
+    thinking = false; render(); showReply(spoken);
+    await say(spoken);
+    if (link && !my.signal.aborted) await launch(link);
+  } catch (e) {
+    if (my.signal.aborted) return;
+    turns.pop();
+    const s = e && e.status;
+    const msg = s === 401 || s === 403 ? 'चाबी गलत लगती है। लोगो दबाकर चाबी जाँचिए।'
+      : s === 429 ? 'अभी बहुत जल्दी-जल्दी हो गया। थोड़ी देर रुककर बोलिए।'
+      : s === 404 ? 'मॉडल का नाम या पता गलत लगता है। लोगो में जाँचिए।'
+      : !navigator.onLine ? 'इंटरनेट कनेक्शन नहीं है।'
+      : 'माफ़ कीजिए, जवाब नहीं आ पाया। एक बार फिर बोलिए।';
+    thinking = false; render(); showReply(msg); await say(msg);
+  } finally {
+    if (ctl === my) { thinking = false; render(); if (!pending) resumeSR(); }
+  }
+}
+
+/* ---------- orb tap ---------- */
+$('orb').addEventListener('click', () => {
+  if (pending) { const l = pending; pending = null; render(); openFromTap(l); resumeSR(); return; }
+  if (thinking) { if (ctl) ctl.abort(); thinking = false; turns.pop(); showReply(''); render(); resumeSR(); return; }
+  if (speaking) { stopSpeaking(); deafUntil = Date.now() + 300; return; }
+  if (wanted) { stopListening(); showHeard(''); showReply('गोले को छूकर बात शुरू कीजिए'); return; }
+  showReply(''); showHeard('');
+  const ok = startListening();
+  if (ok && !greeted) {
+    greeted = true;
+    const g = cfg.name ? 'हाँ ' + cfg.name + ', बोलिए।' : 'हाँ, बोलिए।';
+    showReply(g); say(g);
+  }
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { stopSpeaking(); releaseScreen(); }
+  else if (wanted) { holdScreen(); beginSR(); }
+});
+
+/* ---------- details sheet ---------- */
+function refreshCheck() {
+  if (synth) voices = synth.getVoices();
+  $('ckEar').textContent = SRc ? 'तैयार ✓ (पहली बार माइक की अनुमति माँगेगा)' : 'नहीं चलेगा, Chrome में खोलिए';
+  const hi = voices.some(v => v.lang.replace('_', '-').toLowerCase().startsWith('hi'));
+  $('ckVoice').textContent = !synth ? 'नहीं चलेगा' : hi ? 'हिंदी आवाज़ मिली ✓' : 'हिंदी आवाज़ नहीं मिली, दूसरी से बोलेगा';
+  $('ckBrain').textContent = cfg.key && apiUrl() ? prov().n.split(' (')[0] + ' · ' + apiModel() + ' ✓' : 'चाबी नहीं डाली';
+}
+function syncProvUi() {
+  $('provHelp').textContent = prov().help;
+  $('customBox').hidden = cfg.provider !== 'custom';
+  $('fModel').placeholder = prov().model || 'मॉडल का नाम';
+}
+function openSheet() { refreshCheck(); $('overlay').classList.add('show'); }
+function closeSheet() { $('overlay').classList.remove('show'); }
+$('logo').addEventListener('click', openSheet);
+$('done').addEventListener('click', closeSheet);
+$('overlay').addEventListener('click', e => { if (e.target === $('overlay')) closeSheet(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+$('testVoice').addEventListener('click', () => { const t = 'नमस्ते, मेरी आवाज़ आ रही है?'; showReply(t); say(t); });
+
+Object.keys(PROVIDERS).forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = PROVIDERS[k].n; $('fProv').appendChild(o); });
+$('fName').value = cfg.name; $('fAbout').value = cfg.about; $('fLang').value = cfg.lang; $('fRate').value = cfg.rate;
+$('fShow').checked = !!cfg.showText; $('fProv').value = cfg.provider; $('fKey').value = cfg.key; $('fModel').value = cfg.model; $('fUrl').value = cfg.url;
+syncProvUi();
+$('fName').addEventListener('input', e => { cfg.name = e.target.value.trim(); save(); });
+$('fAbout').addEventListener('input', e => { cfg.about = e.target.value.trim().slice(0, 2000); save(); });
+$('fProv').addEventListener('change', e => { cfg.provider = e.target.value; cfg.model = ''; $('fModel').value = ''; save(); syncProvUi(); refreshCheck(); });
+$('fKey').addEventListener('input', e => { cfg.key = e.target.value.trim(); save(); refreshCheck(); });
+$('fUrl').addEventListener('input', e => { cfg.url = e.target.value.trim(); save(); refreshCheck(); });
+$('fModel').addEventListener('input', e => { cfg.model = e.target.value.trim(); save(); refreshCheck(); });
+$('fLang').addEventListener('change', e => { cfg.lang = e.target.value; save(); if (wanted) { pauseSR(); resumeSR(); } });
+$('fRate').addEventListener('input', e => { cfg.rate = Number(e.target.value); save(); });
+$('fShow').addEventListener('change', e => { cfg.showText = e.target.checked; document.body.classList.toggle('no-text', !cfg.showText); save(); });
+THEMES.forEach((t, i) => {
+  const b = document.createElement('button');
+  b.className = 'sw-btn'; b.type = 'button'; b.title = t.n; b.setAttribute('aria-label', t.n);
+  b.style.background = 'linear-gradient(135deg,' + t.a + ',' + t.b + ')';
+  b.addEventListener('click', () => { cfg.theme = i; applyTheme(i); save(); });
+  $('swatches').appendChild(b);
+});
+applyTheme(cfg.theme);
+document.body.classList.toggle('no-text', !cfg.showText);
+
+/* ---------- install support ---------- */
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+window.__toks = { actionLink, intentUrl, instructions };
+})();
+</script>
+</body>
+</html>

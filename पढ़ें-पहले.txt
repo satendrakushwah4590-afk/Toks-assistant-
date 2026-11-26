@@ -1,0 +1,28 @@
+Toks Assistant: फ़ोन में इंस्टॉल करने के कदम
+==============================================
+
+इस फ़ोल्डर की सारी फ़ाइलें (index.html, manifest.webmanifest, sw.js और 3 आइकन) एक साथ
+किसी https वेबसाइट पर चढ़ानी हैं। फिर फ़ोन के Chrome में उस पते को खोलकर "Install app" दबाना है।
+
+तरीका 1: Netlify Drop (कंप्यूटर से, सबसे आसान, 2 मिनट)
+  1. ज़िप खोलकर (Extract) फ़ोल्डर बना लीजिए।
+  2. app.netlify.com/drop खोलिए और फ़ोल्डर उसमें खींचकर छोड़ दीजिए।
+  3. एक पता मिलेगा (https://कुछ-नाम.netlify.app)। यही आपके ऐप का पता है।
+
+तरीका 2: GitHub Pages (फ़ोन से भी हो सकता है)
+  1. github.com पर मुफ़्त खाता बनाइए, "New repository" बनाइए (नाम: toks, Public)।
+  2. "Add file -> Upload files" में सारी फ़ाइलें चढ़ाइए (ज़िप नहीं, अलग-अलग फ़ाइलें)।
+  3. Settings -> Pages -> Source: "Deploy from a branch", Branch: main, फ़ोल्डर: / (root), Save।
+  4. 1-2 मिनट में पता मिलेगा: https://आपका-नाम.github.io/toks/
+
+फ़ोन में इंस्टॉल (Android, Chrome)
+  1. ऊपर वाले पते को फ़ोन के Chrome में खोलिए।
+  2. ऊपर दाएँ ⋮ दबाइए -> "Install app" (या "Add to Home screen") -> Install।
+  3. होम स्क्रीन पर "Toks" का आइकन आएगा, अब यह अलग ऐप की तरह खुलेगा।
+
+पहली बार
+  1. ऊपर कोने का लोगो दबाइए। नाम और अपनी ज़रूरी बातें लिखिए।
+  2. "दिमाग" में Groq चुनिए, console.groq.com/keys पर मुफ़्त चाबी बनाकर यहाँ चिपका दीजिए।
+  3. गोला दबाइए, माइक की अनुमति दीजिए और बोलना शुरू कीजिए।
+
+असली APK चाहिए तो: ऊपर का पता pwabuilder.com में डालकर "Package for stores -> Android" चुनिए।
